@@ -46,7 +46,7 @@ class AuthService:
             UserModel.update(
                 str(existing_user["_id"]),
                 {
-                    "github_token": access_token
+                    "github_token": access_token,
                 }
             )
 

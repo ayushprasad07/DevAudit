@@ -1,6 +1,10 @@
 from flask import Blueprint, request, redirect, jsonify
 from app.github.auth import GithubAuth
 
+from app.exceptions.custom_exception import AuthenticationError
+
+from app.auth.auth_service import AuthService
+
 github_bp = Blueprint('github', __name__)
 
 @github_bp.route("/auth/github")
@@ -15,11 +19,8 @@ def github_callback():
     code  = request.args.get("code")
 
     if not code:
-        return jsonify({
-            "status" : "false",
-            "message" : "Authorization code not found"
-        }), 400
+        raise AuthenticationError("AAuthentication Code not found")
     
-    access_token = GithubAuth.get_access_token(code)
+    result = AuthService.login(code)
 
-    return jsonify(access_token)
+    return jsonify(result)
