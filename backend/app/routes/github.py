@@ -19,7 +19,7 @@ def github_callback():
     code  = request.args.get("code")
 
     if not code:
-        raise AuthenticationError("AAuthentication Code not found")
+        raise AuthenticationError("Authentication Code not found")
     
     result = AuthService.login(code)
 

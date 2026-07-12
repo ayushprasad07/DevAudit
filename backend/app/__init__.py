@@ -8,6 +8,8 @@ from app.database.connection import mongo
 
 from app.handlers.error_handler import register_error_handler
 
+from app.repository.repository_manager import RepositoryManager
+
 def create_app():
 
     app = Flask(__name__)
@@ -19,6 +21,8 @@ def create_app():
     CORS(app)
 
     register_error_handler(app)
+
+    RepositoryManager.initialize()
 
     app.register_blueprint(health_bp)
     app.register_blueprint(github_bp)
