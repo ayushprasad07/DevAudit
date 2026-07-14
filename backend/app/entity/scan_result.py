@@ -3,6 +3,8 @@ from typing import List
 
 from app.enums.project_types import ProjectType
 
+from app.entity.dependency import Dependency
+
 @dataclass
 class ScanResult:
 
@@ -10,4 +12,4 @@ class ScanResult:
 
     dependecy_list : str
 
-    dependencies : List[dict]  = field (default_factory=list)
+    dependencies : List[Dependency]  = field (default_factory=list)
