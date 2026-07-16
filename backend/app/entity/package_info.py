@@ -1,18 +1,20 @@
 from dataclasses import dataclass
+from typing import Optional
 
 from app.entity.dependency import Dependency
 
+
 @dataclass
 class PackageInfo:
-    
+
     dependency: Dependency
 
     latest_version: str
 
-    description: str
+    license: Optional[str]
 
-    homepage: str
+    description: Optional[str]
 
-    repository: str
+    homepage: Optional[str]
 
-    license: str
+    repository: Optional[str]

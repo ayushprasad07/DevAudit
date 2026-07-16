@@ -38,3 +38,8 @@ class DevauditException (Exception):
          def __init__(self, message="Repository Error"):
 
             super().__init__(message, 500)
+
+    def ExtenralException(DevAuditException):
+         def __init__(self, message="External Exception"):
+
+            super().__init__(message, 500)

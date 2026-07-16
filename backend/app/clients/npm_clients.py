@@ -1,39 +1,26 @@
 import requests
 
+from app.exceptions.custom_exception import ExternalException
+
 class NpmClient:
 
     BASE_URL = "https://registry.npmjs.org"
 
+    @classmethod
     def get_package(self, package_name):
 
-        response = requests.get(
-            f"{self.BASE_URL}/{package_name}",
-            timeout=10
-        )
+        try:
+            response = requests.get(
+                f"{self.BASE_URL}/{package_name}",
+                timeout=10
+            )
 
-        response.raise_for_status()
+            response.raise_for_status()
 
-        data = response.json()
+            return response.json()
+        
+        except requests.RequestException as e:
 
-        latest = data['dist-tags']['latest']
-
-        latest_data = data['versions'][latest]
-
-        return {
-
-            "latest_version": latest,
-
-            "description": latest_data.get("description", ""),
-
-            "homepage": latest_data.get("homepage", ""),
-
-            "repository": (
-                latest_data.get("repository", {})
-                .get("url", "")
-                if isinstance(latest_data.get("repository"), dict)
-                else ""
-            ),
-
-            "license": latest_data.get("license", "")
-        }
-
+            raise ExternalException (
+                f"Unable to fetch '{package_name}' from npm."
+            )from e

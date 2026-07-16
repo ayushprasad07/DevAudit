@@ -1,27 +1,48 @@
-from app.clients.npm_clients import NpmClient
-from app.entity.package_info import PackageInfo
+from typing import List
 
+from app.entity.dependency import Dependency
+from app.entity.package_info import PackageInfo
+from app.clients.npm_clients import NpmClient
 
 class PackageIntelligence:
 
-    @staticmethod
-    def enrich(dependency):
+    @classmethod
+    def enrich_all(cls, dependencies : List[Dependency]) -> List[PackageInfo]:
 
-        metadata = NpmClient.get_package(
-            dependency.name
-        )
+        package_infos = []
+
+        for dependency in dependencies:
+
+            package_infos.append(
+                cls._enrich(dependency)
+            )
+
+        return package_infos
+    
+    @staticmethod
+    def _enrich(dependency : Dependency) -> PackageInfo:
+
+        package = NpmClient.get_package(dependency.name)
+
+        latest_version = package["dist-tags"]["latest"]
+
+        latest_data = package[latest_version]['version']
+
+        repository = latest_data.get("repository")
+
+        if isinstance(repository, dict):
+            repository = repository.get("url")
 
         return PackageInfo(
-
             dependency=dependency,
 
-            latest_version=metadata["latest_version"],
+            latest_version=latest_version,
 
-            description=metadata["description"],
+            description=latest_data.get("description"),
 
-            homepage=metadata["homepage"],
+            homepage=latest_data.get("homepage"),
 
-            repository=metadata["repository"],
+            repository=repository,
 
-            license=metadata["license"]
+            license=latest_data.get("license")
         )
