@@ -1,4 +1,4 @@
-from packaging.version import Version
+from packaging.version import InvalidVersion, Version
 
 
 class VersionAnalyzer:
@@ -6,11 +6,14 @@ class VersionAnalyzer:
     @staticmethod
     def analyze(current_version: str, latest_version: str):
 
-        current = Version(
-            VersionAnalyzer._normalize(current_version)
-        )
+        current = VersionAnalyzer._parse(current_version)
+        latest = VersionAnalyzer._parse(latest_version)
 
-        latest = Version(latest_version)
+        if current is None or latest is None:
+            return {
+                "is_outdated": False,
+                "update_type": "unknown"
+            }
 
         return {
             "is_outdated": current < latest,
@@ -21,15 +24,29 @@ class VersionAnalyzer:
         }
 
     @staticmethod
-    def _normalize(version: str):
+    def _parse(version):
 
-        prefixes = ["^", "~", ">=", "<=", ">", "<"]
+        version = version.strip()
+
+        prefixes = [
+            "^",
+            "~",
+            ">=",
+            "<=",
+            ">",
+            "<",
+            "="
+        ]
 
         for prefix in prefixes:
             if version.startswith(prefix):
-                return version[len(prefix):]
+                version = version[len(prefix):]
 
-        return version
+        try:
+            return Version(version)
+
+        except InvalidVersion:
+            return None
 
     @staticmethod
     def _get_update_type(current, latest):

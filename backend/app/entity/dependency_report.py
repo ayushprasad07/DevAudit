@@ -9,6 +9,12 @@ class DependencyReport:
 
     package : PackageInfo
 
+    isOutdated : bool = False
+
+    update_type : str = "none"
+
+    license_risk : str = "unknown"
+
     vulnerabilities: List[str] = field(default_factory=list)
 
     breaking_changes: List[str] = field(default_factory=list)

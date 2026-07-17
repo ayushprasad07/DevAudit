@@ -1,32 +1,38 @@
 from typing import List
 
+from app.clients.registry_client_factory import RegistryClientFactory
 from app.entity.dependency import Dependency
 from app.entity.package_info import PackageInfo
-from app.clients.npm_clients import NpmClient
+from app.enums.project_types import ProjectType
+
 
 class PackageIntelligence:
 
     @classmethod
-    def enrich_all(cls, dependencies : List[Dependency]) -> List[PackageInfo]:
+    def enrich_all(
+        cls,
+        project_type: ProjectType,
+        dependencies: List[Dependency]
+    ) -> List[PackageInfo]:
 
-        package_infos = []
+        return [
+            cls._enrich(project_type, dependency)
+            for dependency in dependencies
+        ]
 
-        for dependency in dependencies:
-
-            package_infos.append(
-                cls._enrich(dependency)
-            )
-
-        return package_infos
-    
     @staticmethod
-    def _enrich(dependency : Dependency) -> PackageInfo:
+    def _enrich(
+        project_type: ProjectType,
+        dependency: Dependency
+    ) -> PackageInfo:
 
-        package = NpmClient.get_package(dependency.name)
+        registry = RegistryClientFactory.get_client(project_type)
+
+        package = registry.get_package(dependency)
 
         latest_version = package["dist-tags"]["latest"]
 
-        latest_data = package[latest_version]['version']
+        latest_data = package["versions"][latest_version]
 
         repository = latest_data.get("repository")
 
@@ -35,14 +41,9 @@ class PackageIntelligence:
 
         return PackageInfo(
             dependency=dependency,
-
             latest_version=latest_version,
-
             description=latest_data.get("description"),
-
             homepage=latest_data.get("homepage"),
-
             repository=repository,
-
             license=latest_data.get("license")
         )

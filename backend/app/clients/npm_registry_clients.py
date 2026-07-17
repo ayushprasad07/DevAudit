@@ -1,17 +1,18 @@
 import requests
 
 from app.exceptions.custom_exception import ExternalException
+from app.clients.base_registry_client import BaseRegistryClient
 
-class NpmClient:
+class NpmRegistryClient(BaseRegistryClient):
 
     BASE_URL = "https://registry.npmjs.org"
 
     @classmethod
-    def get_package(self, package_name):
+    def get_package(self, dependency):
 
         try:
             response = requests.get(
-                f"{self.BASE_URL}/{package_name}",
+                f"{self.BASE_URL}/{dependency.name}",
                 timeout=10
             )
 
@@ -22,5 +23,5 @@ class NpmClient:
         except requests.RequestException as e:
 
             raise ExternalException (
-                f"Unable to fetch '{package_name}' from npm."
+                f"Unable to fetch '{dependency.name}' from npm."
             )from e
