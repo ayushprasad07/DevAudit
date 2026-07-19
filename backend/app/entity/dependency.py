@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional
 
 @dataclass(frozen=True)
-class Dependebcy:
+class Dependency:
 
     """
     Represents a dependency

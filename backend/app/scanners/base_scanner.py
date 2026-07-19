@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class BaseClass (ABC): 
+class BaseScanner (ABC): 
 
     @abstractmethod
     def scan(self, repository_path):

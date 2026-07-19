@@ -1,10 +1,10 @@
 from flask import jsonify
 
-from app.exceptions.custom_exception import DevauditException
+from app.exceptions.custom_exception import DevAuditException
 
 def register_error_handler(app):
 
-    @app.errorhandler(DevauditException)
+    @app.errorhandler(DevAuditException)
     def handle_custom_exception(error):
 
         return jsonify({

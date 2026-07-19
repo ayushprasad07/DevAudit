@@ -26,7 +26,7 @@ class NodeScanner(BaseScanner):
 
         return ScanResult(
             project_type = ProjectType.NODE,
-            dependecy_file = str(package_file),
+            dependecy_list = str(package_file),
             dependencies = dependencies
         )
     

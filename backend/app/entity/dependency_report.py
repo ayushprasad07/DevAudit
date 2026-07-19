@@ -1,17 +1,18 @@
 from dataclasses import dataclass, field
 from typing import Optional, List
 
-from app.entity.dependency import Dependebcy
 from app.entity.package_info import PackageInfo
+
+from app.enums.update_type import UpdateType
 
 @dataclass
 class DependencyReport:
 
     package : PackageInfo
 
-    isOutdated : bool = False
+    is_outdated : bool = False
 
-    update_type : str = "none"
+    update_type : UpdateType = UpdateType.NONE
 
     license_risk : str = "unknown"
 

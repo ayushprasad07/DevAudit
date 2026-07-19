@@ -3,6 +3,7 @@ from flask_cors import CORS
 
 from app.routes.health import health_bp
 from app.routes.github import github_bp
+from app.routes.repository_reports import repository_bp
 
 from app.database.connection import mongo
 
@@ -26,6 +27,7 @@ def create_app():
 
     app.register_blueprint(health_bp)
     app.register_blueprint(github_bp)
+    app.register_blueprint(repository_bp)
 
     return app
 

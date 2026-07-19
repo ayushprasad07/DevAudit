@@ -1,7 +1,7 @@
 from app.enums.project_types import ProjectType
 from app.scanners.node_scanner import NodeScanner
 
-class DependecnyScannerFactory:
+class DependencyScannerFactory:
 
     @staticmethod
     def get_scanner(project_type):

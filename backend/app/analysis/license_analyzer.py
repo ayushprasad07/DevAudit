@@ -11,7 +11,7 @@ HIGH_RISK_LICENSES = {
 class LicenseAnalyzer:
 
     @staticmethod
-    def analyze(license_name):
+    def analyze(license_name : str) -> str:
 
         if not license_name:
 

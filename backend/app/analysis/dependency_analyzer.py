@@ -1,40 +1,43 @@
+from typing import List
+
 from app.analysis.license_analyzer import LicenseAnalyzer
 from app.analysis.version_analyzer import VersionAnalyzer
 from app.entity.dependency_report import DependencyReport
+from app.entity.repository_report import RepositoryReport
 
 
 class DependencyAnalyzer:
 
-    @staticmethod
-    def analyze(repository_report):
+    @classmethod
+    def analyze(
+        cls,
+        repository_report: RepositoryReport
+    ) -> List[DependencyReport]:
 
         reports = []
 
-        outdated = 0
-
         for package in repository_report.packages:
 
-            version = VersionAnalyzer.analyze(
-                package.dependency.current_version,
-                package.latest_version
+            reports.append(
+                cls._analyze_package(package)
             )
 
-            report = DependencyReport(
-                package=package,
-                is_outdated=version["is_outdated"],
-                update_type=version["update_type"],
-                license_risk=LicenseAnalyzer.analyze(
-                    package.license
-                ),
-                confidence=1.0
-            )
+        return reports
 
-            if report.is_outdated:
-                outdated += 1
+    @staticmethod
+    def _analyze_package(package) -> DependencyReport:
 
-            reports.append(report)
+        version_analysis = VersionAnalyzer.analyze(
+            package.dependency.current_version,
+            package.latest_version
+        )
 
-        repository_report.dependency_reports = reports
-        repository_report.outdated_count = outdated
-
-        return repository_report
+        return DependencyReport(
+            package=package,
+            is_outdated=version_analysis.is_outdated,
+            update_type=version_analysis.update_type,
+            license_risk=LicenseAnalyzer.analyze(
+                package.license
+            ),
+            confidence=1.0
+        )

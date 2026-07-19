@@ -39,6 +39,9 @@ class RepositoryManager:
 
         local_path = cls.get_local_path(owner, repository)
 
+        if local_path.exists():
+            return local_path
+
         # This part of code is like shell scripting and as my project revolve aroung git i have used an alternative known as
         # GitPython due to which i am clearly able to use my command in a more compact way.
 
