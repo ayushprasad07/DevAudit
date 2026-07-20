@@ -12,7 +12,15 @@ class Mongo:
         self.client = MongoClient(app.config["MONGO_URI"])
         self.db = self.client[app.config["DATABASE_NAME"]]
 
+        self.db["package_cache"].create_index(
+            "name",
+            unique=True
+        )
+
         print("Connected to MongoDB")
+
+    def get_db(self):
+        return self.db
     
         
 mongo  = Mongo()

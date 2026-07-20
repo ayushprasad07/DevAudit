@@ -5,6 +5,8 @@ from app.entity.package_info import PackageInfo
 
 from app.enums.update_type import UpdateType
 
+from app.entity.vulnerability import Vulnerability
+
 @dataclass
 class DependencyReport:
 
@@ -16,7 +18,7 @@ class DependencyReport:
 
     license_risk : str = "unknown"
 
-    vulnerabilities: List[str] = field(default_factory=list)
+    vulnerabilities: List[Vulnerability] = field(default_factory=list)
 
     breaking_changes: List[str] = field(default_factory=list)
 
