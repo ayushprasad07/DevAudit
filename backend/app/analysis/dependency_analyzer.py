@@ -5,6 +5,7 @@ from app.analysis.version_analyzer import VersionAnalyzer
 from app.entity.dependency_report import DependencyReport
 from app.entity.repository_report import RepositoryReport
 from app.services.vulnerability_service import VulnerabilityService
+from app.services.security_service import SecurityService
 
 from concurrent.futures import ThreadPoolExecutor
 
@@ -39,7 +40,12 @@ class DependencyAnalyzer:
             package.latest_version
         )
 
-        vulnerabilities = VulnerabilityService.get_vulnerabilities(
+        # vulnerabilities = VulnerabilityService.get_vulnerabilities(
+        #     project_type,
+        #     package.dependency
+        # )
+
+        security = SecurityService.analyze(
             project_type,
             package.dependency
         )
@@ -51,6 +57,6 @@ class DependencyAnalyzer:
             license_risk=LicenseAnalyzer.analyze(
                 package.license
             ),
-            vulnerabilities=vulnerabilities,
+            security=security,
             confidence=1.0
         )

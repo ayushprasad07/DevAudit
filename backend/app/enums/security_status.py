@@ -5,6 +5,6 @@ class SecurityStatus(str, Enum):
 
     SAFE = "safe"
 
-    VULNERABLE = "vulnerable"
+    WARNING = "warning"
 
     CRITICAL = "critical"
