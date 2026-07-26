@@ -53,6 +53,8 @@ class BreakingChange:
 
     migration_url: str | None = None
 
+    release_url: str | None = None
+
     affected_apis: list[str] = field(default_factory=list)
 
     affected_files: list[str] = field(default_factory=list)
@@ -74,3 +76,13 @@ class PackageBreakingChanges:
 class VersionRange:
     current_version: str
     target_version: str
+
+
+@dataclass(slots=True)
+class ParsedRelease:
+
+    release: RawRelease
+
+    breaking_changes: list[BreakingChange] = field(default_factory=list)
+
+    warnings: list[str] = field(default_factory=list)

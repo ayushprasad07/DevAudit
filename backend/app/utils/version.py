@@ -63,7 +63,7 @@ def is_version_in_range(
     parse = parse_version(version)
 
     return (
-        parse_version(current) < parse <= parse_version(target)
+        parse_version(current) <= parse <= parse_version(target)
     )
 
 def sort_version(
