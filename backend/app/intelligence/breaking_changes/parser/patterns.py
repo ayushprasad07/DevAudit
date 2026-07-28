@@ -49,3 +49,58 @@ MIGRATION_HEADINGS = {
     "migration guide",
     "upgrade guide",
 }
+
+REMOVAL_KEYWORDS = {
+    "removed",
+    "remove",
+    "deleted",
+    "delete",
+    "dropped",
+    "drop",
+    "eliminated",
+}
+
+DEPRECATION_KEYWORDS = {
+    "deprecated",
+    "deprecation",
+    "will be removed",
+    "scheduled for removal",
+}
+
+API_CHANGE_KEYWORDS = {
+    "renamed",
+    "changed",
+    "updated",
+    "signature",
+    "parameter",
+    "return type",
+    "requires",
+    "must",
+}
+
+CONFIGURATION_KEYWORDS = {
+    "configuration",
+    "config",
+    "environment variable",
+    ".env",
+    "setting",
+}
+
+SECURITY_KEYWORDS = {
+    "security",
+    "vulnerability",
+    "cve",
+    "exploit",
+    "permission",
+    "authentication",
+    "authorization",
+}
+
+PERFORMANCE_KEYWORDS = {
+    "performance",
+    "optimization",
+    "memory",
+    "cache",
+    "faster",
+    "latency",
+}
