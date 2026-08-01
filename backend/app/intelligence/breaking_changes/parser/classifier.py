@@ -13,8 +13,6 @@ from app.intelligence.breaking_changes.models import (
 from .patterns import (
     API_CHANGE_KEYWORDS,
     BREAKING_HEADINGS,
-    CONFIGURATION_HEADINGS,
-    CONFIGURATION_KEYWORDS,
     DEPRECATION_HEADINGS,
     DEPRECATION_KEYWORDS,
     PERFORMANCE_HEADINGS,
