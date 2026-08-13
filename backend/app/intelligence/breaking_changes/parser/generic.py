@@ -9,7 +9,8 @@ from .base import BaseReleaseParser
 from .classifier import BreakingChangeClassifier
 from .normalizer import MarkdownNormalizer
 from .section import SectionExtractor
-
+from .analyzer import SentenceAnalyzer
+from .item import ItemExtractor
 
 class GenericReleaseParser(BaseReleaseParser):
 
@@ -18,6 +19,8 @@ class GenericReleaseParser(BaseReleaseParser):
         self._normalizer = MarkdownNormalizer()
         self._section_extractor = SectionExtractor()
         self._classifier = BreakingChangeClassifier()
+        self._analyzer = SentenceAnalyzer()
+        self._item_extractor = ItemExtractor()
 
 
     def parse(
@@ -38,13 +41,23 @@ class GenericReleaseParser(BaseReleaseParser):
         )
 
         for section in sections:
-
-            changes = self._classifier.classify(
-                release=release,
-                heading=section.heading,
-                content=section.content,
+            items = self._item_extractor.extract(
+                section.content
             )
 
-            parsed.breaking_changes.extend(changes)
+            for item in items:
+
+                sentence = self._analyzer.analyze(item)
+
+                if not sentence:
+                    continue
+
+                changes = self._classifier.classify(
+                    release=release,
+                    heading=section.heading,
+                    sentence=sentence,
+                )
+
+                parsed.breaking_changes.append(changes)
 
         return parsed

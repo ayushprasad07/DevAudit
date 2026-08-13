@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import re
-
 from app.intelligence.breaking_changes.models import (
     BreakingChange,
     BreakingChangeCategory,
@@ -9,6 +7,8 @@ from app.intelligence.breaking_changes.models import (
     BreakingChangeSource,
     RawRelease,
 )
+
+from .models import ParsedSentence
 
 from .patterns import (
     API_CHANGE_KEYWORDS,
@@ -23,108 +23,69 @@ from .patterns import (
     SECURITY_KEYWORDS,
 )
 
+
 class BreakingChangeClassifier:
 
-    BULLET_PATTERN = re.compile(r"^\s*[-*+]\s+(.*)$")
-
-    API_PATTERN = re.compile(
-        r"\b[A-Za-z_][A-Za-z0-9_]*(?:[./][A-Za-z0-9_]+)+\b"
-    )
-
-    FILE_PATTERN = re.compile(
-        r"\b[\w./-]+\.(?:ts|tsx|js|jsx|py|java|go|rb|php|json|ya?ml|toml|ini|env)\b"
-    )
-
     def classify(
-            self,
-            release : RawRelease,
-            heading : str,
-            content : str
-    ) -> list[BreakingChange]:
+        self,
+        release: RawRelease,
+        heading: str,
+        sentence: ParsedSentence,
+    ) -> BreakingChange:
 
-        changes: list[BreakingChange] = []
+        category = self._detect_category(
+            heading,
+            sentence,
+        )
 
-        items = self._extract_items(content)
+        severity = self._detect_severity(
+            category,
+            sentence,
+        )
 
-        for item in items:
-
-            category = self._detect_category(
+        return BreakingChange(
+            version=release.version,
+            title=self._build_title(sentence.text),
+            description=sentence.text,
+            category=category,
+            severity=severity,
+            source=BreakingChangeSource.GITHUB_RELEASE,
+            release_url=release.url,
+            affected_apis=sentence.apis,
+            affected_files=sentence.files,
+            confidence=self._calculate_confidence(
                 heading,
-                item,
-            )
-
-            severity = self._detect_severity(
+                sentence,
                 category,
-                item,
-            )
-
-            changes.append(
-                BreakingChange(
-                    version=release.version,
-                    title=self._build_title(item),
-                    description=item,
-                    category=category,
-                    severity=severity,
-                    source=BreakingChangeSource.GITHUB_RELEASE,
-                    release_url=release.url,
-                    affected_apis=self._extract_affected_apis(item),
-                    affected_files=self._extract_affected_files(item),
-                    confidence=self._calculate_confidence(
-                        heading,
-                        item,
-                        category,
-                    ),
-                )
-            )
-
-        return changes
-
-    def _extract_items(
-            self,
-            content : str
-    ) -> list[str]:
-
-        items : list[str] = []
-
-        for line in content.splitlines():
-
-            line = line.strip()
-
-            if not line :
-                continue
-
-            match = self.BULLET_PATTERN.match(line)
-
-            if match:
-                items.append(match.group(1).strip())
-
-            else:
-                items.append(line)
-
-        return items
+            ),
+        )
 
     def _build_title(
-            self,
-            text : str
+        self,
+        text: str,
     ) -> str:
 
         text = text.strip()
 
-        if len(text)<= 80:
+        if len(text) <= 80:
             return text
 
-        return text[:77] + "....."
+        return text[:77] + "..."
 
     def _detect_category(
         self,
         heading: str,
-        text: str,
+        sentence: ParsedSentence,
     ) -> BreakingChangeCategory:
 
-        combined = f"{heading} {text}".lower()
+        combined = (
+            f"{heading} {sentence.text}"
+        ).lower()
 
-        # Configuration changes usually reference project files.
-        if self._extract_affected_files(text):
+        if sentence.files:
+            return BreakingChangeCategory.CONFIGURATION
+
+        if sentence.config_keys:
             return BreakingChangeCategory.CONFIGURATION
 
         if self._contains_any(
@@ -157,23 +118,28 @@ class BreakingChangeClassifier:
         ):
             return BreakingChangeCategory.API_CHANGE
 
+        if sentence.apis:
+            return BreakingChangeCategory.API_CHANGE
+
         return BreakingChangeCategory.OTHER
 
     def _detect_severity(
         self,
         category: BreakingChangeCategory,
-        text : str
+        sentence: ParsedSentence,
     ) -> BreakingChangeSeverity:
 
-        text = text.lower()
+        keywords = sentence.keywords
 
-        if any(word in text for word in(
-            "breaking",
-            "must",
-            "required",
-            "incompatible",
-        )):
-
+        if any(
+            word in keywords
+            for word in {
+                "breaking",
+                "must",
+                "required",
+                "incompatible",
+            }
+        ):
             return BreakingChangeSeverity.BREAKING
 
         if category in {
@@ -196,31 +162,10 @@ class BreakingChangeClassifier:
 
         return BreakingChangeSeverity.MINOR
 
-    def _extract_affected_apis(
-        self,
-        text: str,
-    ) -> list[str]:
-
-        apis = set(self.API_PATTERN.findall(text))
-        files = set(self._extract_affected_files(text))
-
-        return sorted(apis - files)
-
-    def _extract_affected_files(
-            self,
-            text : str
-    ) -> list[str]:
-
-        return sorted(
-            set(
-                self.FILE_PATTERN.findall(text)
-            )
-        )
-
     def _calculate_confidence(
         self,
         heading: str,
-        text: str,
+        sentence: ParsedSentence,
         category: BreakingChangeCategory,
     ) -> float:
 
@@ -229,14 +174,17 @@ class BreakingChangeClassifier:
         if category != BreakingChangeCategory.OTHER:
             score += 0.3
 
-        if self._extract_affected_files(text):
+        if sentence.files:
             score += 0.2
 
-        if self._extract_affected_apis(text):
+        if sentence.apis:
             score += 0.2
+
+        if sentence.config_keys:
+            score += 0.1
 
         if self._contains_any(
-            text.lower(),
+            sentence.keywords,
             REMOVAL_KEYWORDS
             | DEPRECATION_KEYWORDS
             | SECURITY_KEYWORDS,
@@ -247,8 +195,12 @@ class BreakingChangeClassifier:
 
     @staticmethod
     def _contains_any(
-        text : str,
-        keywords : set[str]
+        keywords: set[str],
+        candidates: set[str],
     ) -> bool:
 
-        return any(keyword in text for keyword in keywords)
+        return any(
+            keyword.lower() in keywords
+            for keyword in candidates
+        )
+    
