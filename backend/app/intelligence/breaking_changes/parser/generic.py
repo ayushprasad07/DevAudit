@@ -6,58 +6,29 @@ from app.intelligence.breaking_changes.models import (
 )
 
 from .base import BaseReleaseParser
-from .classifier import BreakingChangeClassifier
-from .normalizer import MarkdownNormalizer
-from .section import SectionExtractor
-from .analyzer import SentenceAnalyzer
-from .item import ItemExtractor
+from .markdown_parser import MarkdownParser
+
 
 class GenericReleaseParser(BaseReleaseParser):
 
     def __init__(self) -> None:
 
-        self._normalizer = MarkdownNormalizer()
-        self._section_extractor = SectionExtractor()
-        self._classifier = BreakingChangeClassifier()
-        self._analyzer = SentenceAnalyzer()
-        self._item_extractor = ItemExtractor()
-
+        self._markdown_parser = MarkdownParser()
 
     def parse(
-            self,
-            release: RawRelease,
-    )-> ParsedRelease:
+        self,
+        release: RawRelease,
+    ) -> ParsedRelease:
 
-        markdown = self._normalizer.normalizer(
+        nodes = self._markdown_parser.parse(
             release.body
-        )
-
-        sections = self._section_extractor.extract(
-            markdown
         )
 
         parsed = ParsedRelease(
             release=release,
         )
 
-        for section in sections:
-            items = self._item_extractor.extract(
-                section.content
-            )
-
-            for item in items:
-
-                sentence = self._analyzer.analyze(item)
-
-                if not sentence:
-                    continue
-
-                changes = self._classifier.classify(
-                    release=release,
-                    heading=section.heading,
-                    sentence=sentence,
-                )
-
-                parsed.breaking_changes.append(changes)
+        # Intelligence layer will consume these
+        # structured nodes in the next phase.
 
         return parsed

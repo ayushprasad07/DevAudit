@@ -2,46 +2,24 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+@dataclass
+class MarkdownNode:
+    type : str
 
-@dataclass(slots=True, frozen=True)
-class MarkdownSection:
-    """
-    Represents a markdown section extracted from a release note.
+    content : str = ""
 
-    Example
-    -------
-    ## Breaking Changes
+    level : int = 0
 
-    Removed Image component.
+    children : list[MarkdownNode] = field(default_factory=list)
 
-    Deprecated next/head.
-    """
+@dataclass(slots = True)
+class ReleaseItem:
+    text : str
+    heading: str | None = None
+    heading_level: int = 0
+    source_type : str = "text"
 
-    heading: str
+@dataclass(slots = True)
+class InterpretedRelease:
 
-    level: int
-
-    content: str
-
-@dataclass(slots=True)
-class ParsedSentence:
-    """
-    Internal parser representation.
-
-    This object contains every fact extracted from a sentence.
-    Rules/classifiers should consume this instead of running regexes.
-    """
-
-    text: str
-
-    urls: list[str] = field(default_factory=list)
-
-    files: list[str] = field(default_factory=list)
-
-    apis: list[str] = field(default_factory=list)
-
-    config_keys: list[str] = field(default_factory=list)
-
-    versions: list[str] = field(default_factory=list)
-
-    keywords: set[str] = field(default_factory=set)
+    items : list[ReleaseItem] = field(default_factory=list)
