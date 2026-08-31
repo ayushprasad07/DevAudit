@@ -13,10 +13,16 @@ from app.intelligence.breaking_changes.models import (
 
 from .evidence import RuleResult
 
+
 class BaseRule(ABC):
 
     category : BreakingChangeCategory
-    sevrity : BreakingChangeSeverity
+    severity : BreakingChangeSeverity
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        ...
     
     @abstractmethod
     def evaluate(

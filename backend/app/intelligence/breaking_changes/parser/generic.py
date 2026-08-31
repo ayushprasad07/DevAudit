@@ -9,6 +9,7 @@ from .base import BaseReleaseParser
 from .markdown_parser import MarkdownParser
 from ..rule_engine import RuleEngine
 from .release_interpreter import ReleaseInterpreter
+from .metadata_filter import MetadataFilter
 
 class GenericReleaseParser(BaseReleaseParser):
 
@@ -17,6 +18,7 @@ class GenericReleaseParser(BaseReleaseParser):
         self._markdown_parser = MarkdownParser()
         self._intepreter = ReleaseInterpreter()
         self._rule_engine = RuleEngine()
+        self._metadata_filter = MetadataFilter()
 
     def parse(
         self,
@@ -31,11 +33,15 @@ class GenericReleaseParser(BaseReleaseParser):
             nodes
         )
 
+        items = self._metadata_filter.filter(
+            items=interpreted.items
+        )
+
         parsed = ParsedRelease(
             release=release,
         )
 
-        for item in interpreted.items:
+        for item in items:
 
             changes = self._rule_engine.evaluate(
                 item=item,

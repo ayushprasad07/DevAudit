@@ -23,6 +23,10 @@ class RemovalRule(BaseRule):
     category = BreakingChangeCategory.REMOVAL
     severity = BreakingChangeSeverity.BREAKING
 
+    @property
+    def name(self) -> str:
+        return "removal"
+
     _STRONG_PATTERNS = (
         re.compile(
             r"\bremoved\b",

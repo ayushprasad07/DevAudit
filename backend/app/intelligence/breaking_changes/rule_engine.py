@@ -19,9 +19,12 @@ class RuleEngine:
         rules: list[BaseRule] | None = None,
     ) -> None:
 
-        self._rules = rules or [
-            RemovalRule(),
-        ]
+        if rules is None:
+            self._rules = [
+                RemovalRule(),
+            ]
+        else:
+            self._rules = rules
 
     def evaluate(
         self,
