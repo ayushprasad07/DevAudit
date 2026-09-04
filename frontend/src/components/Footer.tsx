@@ -1,0 +1,2 @@
+import { GitBranch, ShieldCheck } from "lucide-react";
+export default function Footer() { return <footer><div className="shell footer-content"><a className="brand" href="#top"><span className="brand-mark"><ShieldCheck size={18} /></span><span>devaudit</span></a><p>Security intelligence for software that ships.</p><a className="github-link" href="https://github.com" target="_blank" rel="noreferrer"><GitBranch size={17} /> GitHub</a></div></footer>; }
