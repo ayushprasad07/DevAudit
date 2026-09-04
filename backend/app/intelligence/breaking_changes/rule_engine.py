@@ -10,6 +10,7 @@ from app.intelligence.breaking_changes.parser.models import (
 
 from .rules.base import BaseRule
 from .rules.removal import RemovalRule
+from .rules.deprecation import DeprecationRule
 
 
 class RuleEngine:
@@ -22,6 +23,7 @@ class RuleEngine:
         if rules is None:
             self._rules = [
                 RemovalRule(),
+                DeprecationRule(),
             ]
         else:
             self._rules = rules
