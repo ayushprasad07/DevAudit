@@ -35,7 +35,7 @@ export function NavbarDemo() {
           <NavbarLogo />
           <NavItems items={navItems} />
           <div className="flex items-center gap-4 text-zinc-900">
-            <NavbarButton variant="primary"><GitBranch size={10} />Connect to Github</NavbarButton>
+            <NavbarButton variant="primary" className="font-bold"><GitBranch size={10} />Connect to Github</NavbarButton>
           </div>
         </NavBody>
 
