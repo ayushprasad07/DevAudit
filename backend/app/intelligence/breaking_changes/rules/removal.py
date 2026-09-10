@@ -29,7 +29,7 @@ class RemovalRule(BaseRule):
 
     _STRONG_PATTERNS = (
         re.compile(
-            r"\bremoved\b",
+            r"\b(?:was|were|has been|have been|is|are)\s+removed\b",
             re.IGNORECASE,
         ),
         re.compile(

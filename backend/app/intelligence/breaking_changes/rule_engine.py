@@ -11,6 +11,7 @@ from app.intelligence.breaking_changes.parser.models import (
 from .rules.base import BaseRule
 from .rules.removal import RemovalRule
 from .rules.deprecation import DeprecationRule
+from app.intelligence.breaking_changes.decision.engine import RuleEvaluation
 
 
 class RuleEngine:
@@ -58,3 +59,23 @@ class RuleEngine:
             )
 
         return changes
+
+    def evaluate_rules(
+            self,
+            items : ReleaseItem,
+    ) -> list[RuleEvaluation] :
+
+        evaluations : list[RuleEvaluation] = []
+
+        for rule in self._rules:
+
+            result = rule.evaluate(items)
+
+            evaluations.append(
+                RuleEvaluation(
+                    rule=rule,
+                    result=result,
+                )
+            )
+
+        return evaluations

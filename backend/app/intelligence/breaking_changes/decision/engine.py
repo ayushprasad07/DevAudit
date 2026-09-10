@@ -19,6 +19,11 @@ class RuleEvaluation:
     rule: BaseRule
     result: RuleResult
 
+@dataclass(slots=True)
+class Decision:
+    level: DecisionLevel
+    evaluation: RuleEvaluation
+
 
 class DecisionEngine:
 
@@ -42,3 +47,14 @@ class DecisionEngine:
             return DecisionLevel.LOW
 
         return DecisionLevel.NONE
+
+    def decide(
+        self,
+        evaluation: RuleEvaluation,
+    ) -> Decision:
+
+        
+        return Decision(
+            level=self.classify(evaluation),
+            evaluation=evaluation,
+        )

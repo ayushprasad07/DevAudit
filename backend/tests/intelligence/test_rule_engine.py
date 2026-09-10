@@ -77,3 +77,39 @@ def test_multiple_rules_can_evaluate_same_item():
 
     assert BreakingChangeCategory.DEPRECATION in categories
     assert BreakingChangeCategory.REMOVAL in categories
+
+def test_rule_engine_returns_evaluations_for_all_rules():
+    engine = RuleEngine()
+
+    item = make_item(
+        "The old API is deprecated and will be removed in a future release."
+    )
+
+    evaluations = engine.evaluate_rules(item)
+
+    rule_names = {
+        evaluation.rule.name
+        for evaluation in evaluations
+    }
+
+    assert "removal" in rule_names
+    assert "deprecation" in rule_names
+
+
+def test_rule_engine_preserves_rule_confidence():
+    engine = RuleEngine()
+
+    item = make_item(
+        "This API will be removed in a future release."
+    )
+
+    evaluations = engine.evaluate_rules(item)
+
+    deprecation_evaluation = next(
+        evaluation
+        for evaluation in evaluations
+        if evaluation.rule.name == "deprecation"
+    )
+
+    assert deprecation_evaluation.result.confidence == 0.30
+    assert deprecation_evaluation.result.matched is False

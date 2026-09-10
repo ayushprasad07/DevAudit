@@ -49,3 +49,13 @@ def test_no_confidence():
     evaluation = make_evaluation(0.0)
 
     assert engine.classify(evaluation) == DecisionLevel.NONE
+
+def test_decision_preserves_rule_evaluation():
+    engine = DecisionEngine()
+
+    evaluation = make_evaluation(0.90)
+
+    decision = engine.decide(evaluation)
+
+    assert decision.level == DecisionLevel.HIGH
+    assert decision.evaluation is evaluation
