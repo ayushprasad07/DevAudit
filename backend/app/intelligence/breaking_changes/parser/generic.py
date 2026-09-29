@@ -7,18 +7,18 @@ from app.intelligence.breaking_changes.models import (
 
 from .base import BaseReleaseParser
 from .markdown_parser import MarkdownParser
-from ..rule_engine import RuleEngine
-from .release_interpreter import ReleaseInterpreter
 from .metadata_filter import MetadataFilter
+from .release_interpreter import ReleaseInterpreter
+from ..analyzer import IntelligenceAnalyzer
+
 
 class GenericReleaseParser(BaseReleaseParser):
 
     def __init__(self) -> None:
-
         self._markdown_parser = MarkdownParser()
-        self._intepreter = ReleaseInterpreter()
-        self._rule_engine = RuleEngine()
+        self._interpreter = ReleaseInterpreter()
         self._metadata_filter = MetadataFilter()
+        self._analyzer = IntelligenceAnalyzer()
 
     def parse(
         self,
@@ -29,7 +29,7 @@ class GenericReleaseParser(BaseReleaseParser):
             release.body
         )
 
-        interpreted = self._intepreter.interpret(
+        interpreted = self._interpreter.interpret(
             nodes
         )
 
@@ -37,21 +37,18 @@ class GenericReleaseParser(BaseReleaseParser):
             items=interpreted.items
         )
 
+        analysis = self._analyzer.analyze(
+            items=items,
+            version=release.version,
+            release_url=release.url,
+        )
+
         parsed = ParsedRelease(
             release=release,
         )
 
-        for item in items:
-
-            changes = self._rule_engine.evaluate(
-                item=item,
-                version=release.version,
-                release_url=release.url,
-            )
-
-            parsed.breaking_changes.extend(changes)
-
-        # Intelligence layer will consume these
-        # structured nodes in the next phase.
+        parsed.breaking_changes.extend(
+            analysis.breaking_changes
+        )
 
         return parsed

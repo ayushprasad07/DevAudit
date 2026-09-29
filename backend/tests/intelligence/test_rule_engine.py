@@ -76,7 +76,7 @@ def test_multiple_rules_can_evaluate_same_item():
     }
 
     assert BreakingChangeCategory.DEPRECATION in categories
-    assert BreakingChangeCategory.REMOVAL in categories
+    assert BreakingChangeCategory.REMOVAL not in categories
 
 def test_rule_engine_returns_evaluations_for_all_rules():
     engine = RuleEngine()

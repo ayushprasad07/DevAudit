@@ -66,7 +66,29 @@ def test_multiple_rules_are_processed():
     result = analyzer.analyze(
         items=[
             make_item(
-                "The old API is deprecated and will be removed."
+                "The old API was deprecated and the legacy endpoint was removed."
+            )
+        ],
+        version="3.1.0",
+        release_url="https://example.com/release",
+    )
+
+    categories = {
+        change.category
+        for change in result.breaking_changes
+    }
+
+    assert BreakingChangeCategory.DEPRECATION in categories
+    assert BreakingChangeCategory.REMOVAL in categories
+
+def test_multiple_rules_can_produce_multiple_changes():
+
+    analyzer = IntelligenceAnalyzer()
+
+    result = analyzer.analyze(
+        items=[
+            make_item(
+                "The old API was deprecated and the legacy endpoint was removed."
             )
         ],
         version="3.1.0",

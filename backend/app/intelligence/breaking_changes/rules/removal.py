@@ -33,6 +33,10 @@ class RemovalRule(BaseRule):
             re.IGNORECASE,
         ),
         re.compile(
+            r"^removed\b",
+            re.IGNORECASE,
+        ),
+        re.compile(
             r"\bno longer supported\b",
             re.IGNORECASE,
         ),
