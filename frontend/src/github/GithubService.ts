@@ -1,36 +1,43 @@
-import {getServerSession} from "next-auth";
-import {authOptions} from "@/auth";
-
 const GITHUB_API = "https://api.github.com";
 
-export class GithubService{
-    private async getAccessToken(): Promise<string>{
-        const session =  await getServerSession(authOptions);
+export interface GitHubRepository {
+  id: number;
+  name: string;
+  full_name: string;
+  private: boolean;
+  html_url: string;
+  default_branch: string;
+}
 
-        if (!session ){
-            throw new Error("Not authenticated");
-        }
+export class GithubService {
+  constructor(private readonly accessToken: string) {}
 
-        // Token will be retrieved from the server-side NextAuth JWT.
-        // We will wire this up properly through a server-side helper.
-        throw new Error("GitHub access token retrieval not implemented");
+  private async request<T>(endpoint: string): Promise<T> {
+    const response = await fetch(`${GITHUB_API}${endpoint}`, {
+      headers: {
+        Authorization: `Bearer ${this.accessToken}`,
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `GitHub API request failed: ${response.status}`
+      );
     }
 
-    private async getCurretnUser(){
-        const accessToken  = await this.getAccessToken();
+    return response.json();
+  }
 
-        const response = await fetch(`${GITHUB_API}/user`, {
-        headers: {
-            Authorization: `Bearer ${accessToken}`,
-            Accept: "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-        },
-        });
+  async getCurrentUser() {
+    return this.request("/user");
+  }
 
-        if (!response.ok){
-            throw new Error("Failed to fetch current user");
-        }
-
-        return response.json();
-    }
+  async getRepositories(): Promise<GitHubRepository[]> {
+    return this.request<GitHubRepository[]>(
+      "/user/repos?sort=updated&per_page=100"
+    );
+  }
 }
