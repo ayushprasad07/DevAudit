@@ -3,7 +3,7 @@ import type { NextApiRequest } from "next";
 
 export async function getGithubAccessToken(
     req : NextApiRequest
-) : Promise<String> {
+) : Promise<string> {
 
     const token  = await getToken({
         req,

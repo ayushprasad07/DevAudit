@@ -1,6 +1,6 @@
 export interface Repository{
-    url : String;
-    path : String;
-    commit ?: String;
-    branch ?: String;
+    url : string;
+    path : string;
+    commit ?: string;
+    branch ?: string;
 }   
