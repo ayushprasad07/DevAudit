@@ -1,0 +1,7 @@
+{
+  "name": "test-repository",
+  "version": "1.0.0",
+  "scripts": {
+    "postinstall": "echo test"
+  }
+}

@@ -1,4 +1,4 @@
-import type {GithubRepository} from "@/github/types";
+import type { GithubRepository } from "@/github/types";
 
 const GITHUB_API = "https://api.github.com";
 
@@ -38,9 +38,7 @@ export class GithubService {
     });
 
     if (!response.ok) {
-      throw new Error(
-        `GitHub API request failed: ${response.status}`
-      );
+      throw new Error(`GitHub API request failed: ${response.status}`);
     }
 
     return response.json();
@@ -51,23 +49,42 @@ export class GithubService {
   }
 
   async getRepositories(): Promise<GithubRepository[]> {
-        const repositories =
-            await this.request<GitHubRepositoryResponse[]>(
-            "/user/repos?sort=updated&per_page=100"
-            );
+    const repositories = await this.request<GitHubRepositoryResponse[]>(
+      "/user/repos?sort=updated&per_page=100",
+    );
 
-        return repositories.map((repository) => ({
-            id: repository.id,
-            name: repository.name,
-            fullName: repository.full_name,
-            owner: repository.owner.login,
-            url: repository.html_url,
-            cloneUrl: repository.clone_url,
-            private: repository.private,
-            defaultBranch: repository.default_branch,
-            language: repository.language,
-            description: repository.description,
-            updatedAt: repository.updated_at,
-        }));
-    }
+    return repositories.map((repository) => ({
+      id: repository.id,
+      name: repository.name,
+      fullName: repository.full_name,
+      owner: repository.owner.login,
+      url: repository.html_url,
+      cloneUrl: repository.clone_url,
+      private: repository.private,
+      defaultBranch: repository.default_branch,
+      language: repository.language,
+      description: repository.description,
+      updatedAt: repository.updated_at,
+    }));
+  }
+
+  async getRepository(owner: string, repo: string): Promise<GithubRepository> {
+    const repository = await this.request<GitHubRepositoryResponse>(
+      `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`,
+    );
+
+    return {
+      id: repository.id,
+      name: repository.name,
+      fullName: repository.full_name,
+      owner: repository.owner.login,
+      url: repository.html_url,
+      cloneUrl: repository.clone_url,
+      private: repository.private,
+      defaultBranch: repository.default_branch,
+      language: repository.language,
+      description: repository.description,
+      updatedAt: repository.updated_at,
+    };
+  }
 }
