@@ -1,15 +1,30 @@
-export type Ecosystem = 
-    | "javascript"
-    | "python"
-    | "go"
-    | "java"
-    | "rust";
+import { z } from "zod";
 
-export interface Dependency{
-    name: string;
-    version: string;
-    ecosystem: Ecosystem;
-    direct ?: boolean;
-    license ?: string;
-    repositoryUrl ?: string;
+export const EcosystemSchema = z.enum(
+    [
+        "javascript",
+        "python"
+    ]
+)
+
+export type Ecosystem = z.infer<typeof EcosystemSchema>
+
+export const PackageManagerSchema = z.enum([
+    "npm",
+    "pnpm",
+    "yarn",
+    "pip",
+    "uv",
+    "poetry",
+])
+
+export type PackageManager = z.infer<typeof PackageManagerSchema>
+
+export interface Dependency {
+  name: string;
+  version: string;
+  ecosystem: Ecosystem;
+  direct?: boolean;
+  license?: string;
+  repositoryUrl?: string;
 }
