@@ -20,15 +20,23 @@ export const WorkerErrorCodeSchema = z.enum([
   "INTERNAL_ERROR",
 ]);
 
-export type WorkerErrorCode = z.infer<typeof WorkerErrorCodeSchema>;
+export type WorkerErrorCode = z.infer<
+  typeof WorkerErrorCodeSchema
+>;
+
+
+/*
+ * Worker request
+ */
 
 export const WorkerAnalysisRequestSchema = z.object({
-  contractVersion : z.literal(WORKER_CONTRACT_VERSION),
+  contractVersion: z.literal(WORKER_CONTRACT_VERSION),
 
-  job_id : z.string().min(1),
+  jobId: z.string().min(1),
 
   repository: z.object({
     url: z.string().url(),
+
     commit: z
       .string()
       .regex(
@@ -37,7 +45,7 @@ export const WorkerAnalysisRequestSchema = z.object({
       ),
   }),
 
-  ecosystem : EcosystemSchema,
+  ecosystem: EcosystemSchema,
 
   timeoutMs: z
     .number()
@@ -46,5 +54,85 @@ export const WorkerAnalysisRequestSchema = z.object({
     .max(300_000),
 });
 
-export type WorkerAnalysisRequest = z.infer<typeof WorkerAnalysisRequestSchema>
+export type WorkerAnalysisRequest = z.infer<
+  typeof WorkerAnalysisRequestSchema
+>;
 
+
+/*
+ * Raw dependency graph
+ *
+ * This is intentionally the worker's raw graph.
+ * License intelligence and higher-level analysis
+ * will happen in the main TypeScript application.
+ */
+
+export const RawDependencySchema = z.object({
+  name: z.string().min(1),
+
+  version: z.string().min(1),
+
+  dependencies: z.array(z.string()),
+});
+
+export type RawDependency = z.infer<
+  typeof RawDependencySchema
+>;
+
+export const RawDependencyGraphSchema = z.object({
+  root: z.string().min(1),
+
+  dependencies: z.array(
+    RawDependencySchema
+  ),
+});
+
+export type RawDependencyGraph = z.infer<
+  typeof RawDependencyGraphSchema
+>;
+
+
+/*
+ * Worker response
+ */
+
+export const WorkerAnalysisResponseSchema =
+  z.discriminatedUnion("status", [
+    z.object({
+      status: z.literal("ok"),
+
+      jobId: z.string().min(1),
+
+      contractVersion: z.literal(
+        WORKER_CONTRACT_VERSION
+      ),
+
+      ecosystem: EcosystemSchema,
+
+      packageManager: PackageManagerSchema,
+
+      toolVersion: z.string().min(1),
+
+      graph: RawDependencyGraphSchema,
+    }),
+
+    z.object({
+      status: z.literal("error"),
+
+      jobId: z.string().min(1),
+
+      contractVersion: z.literal(
+        WORKER_CONTRACT_VERSION
+      ),
+
+      error: z.object({
+        code: WorkerErrorCodeSchema,
+
+        message: z.string().min(1),
+      }),
+    }),
+  ]);
+
+export type WorkerAnalysisResponse = z.infer<
+  typeof WorkerAnalysisResponseSchema
+>;
