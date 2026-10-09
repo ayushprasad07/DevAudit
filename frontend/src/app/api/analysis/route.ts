@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { JobManager } from "@/services/jobs/JobManager";
 import { MongoJobStore } from "@/services/jobs/MongoJobStore";
 import { generateJobId } from "@/services/jobs/jobId";
-import { AnalysisJobRequestSchema } from "@/types/analysisJob";
+import  {AnalysisJobRequestSchema}  from "@/types/analysisJob";
 
 function getJobManager(): JobManager {
   return new JobManager(new MongoJobStore());
