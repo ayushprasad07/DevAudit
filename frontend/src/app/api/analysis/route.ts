@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 
+import { AnalysisJobService } from "@/services/analysis/AnalysisJobService";
 import { JobManager } from "@/services/jobs/JobManager";
 import { MongoJobStore } from "@/services/jobs/MongoJobStore";
-import { generateJobId } from "@/services/jobs/jobId";
-import  {AnalysisJobRequestSchema}  from "@/types/analysisJob";
+import { AnalysisJobRequestSchema } from "@/types/analysisJob";
 
-function getJobManager(): JobManager {
-  return new JobManager(new MongoJobStore());
+function getAnalysisJobService(): AnalysisJobService {
+  const jobManager = new JobManager(new MongoJobStore());
+
+  // Temporary placeholder.
+  // We'll replace this with the real worker dispatcher next.
+  throw new Error("Worker dispatcher not configured");
 }
 
 export async function POST(request: Request) {
@@ -26,9 +30,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const jobId = generateJobId();
+    const service = getAnalysisJobService();
 
-    const job = await getJobManager().create(jobId);
+    const job = await service.createAnalysisJob(parsed.data);
 
     return NextResponse.json(
       {
@@ -41,9 +45,9 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         status: "error",
-        message: "Invalid request body",
+        message: "Unable to create analysis job",
       },
-      { status: 400 }
+      { status: 500 }
     );
   }
 }

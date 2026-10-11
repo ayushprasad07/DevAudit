@@ -126,4 +126,26 @@ describe("JobManager", () => {
       "Job not found: unknown_job"
     );
   });
+
+  it("fails a queued job before worker dispatch starts", async () => {
+  const store = new InMemoryJobStore();
+  const manager = new JobManager(store);
+
+  const job = await manager.create("job_dispatch_failure");
+
+  const failedJob = await manager.failBeforeStart(
+    job.jobId,
+    "DISPATCH_FAILED",
+    "Worker unavailable"
+  );
+
+  expect(failedJob.status).toBe("failed");
+  expect(failedJob.error).toEqual({
+    code: "DISPATCH_FAILED",
+    message: "Worker unavailable",
+  });
+  expect(failedJob.completedAt).toBeDefined();
+
+  expect(await manager.get(job.jobId)).toEqual(failedJob);
+});
 });

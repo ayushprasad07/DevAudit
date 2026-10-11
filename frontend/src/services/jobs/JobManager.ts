@@ -80,6 +80,31 @@ export class JobManager {
     return job;
   }
 
+  async failBeforeStart(
+    jobId : string,
+    code: string,
+    message: string
+  ) : Promise<Job>{
+    const job = await this.getOrThrow(jobId);
+
+    if (job.status !== "queued") {
+      throw new Error(
+        `Cannot fail job ${jobId} before start from status ${job.status}`
+      );
+    }
+
+    job.status = "failed";
+    job.completedAt = new Date().toISOString();
+    job.error = {
+      code,
+      message,
+    };
+
+    await this.store.update(job);
+
+    return job;
+  }
+
   private async getOrThrow(jobId: string): Promise<Job> {
     const job = await this.store.get(jobId);
 
