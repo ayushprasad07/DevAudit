@@ -4,13 +4,22 @@ import { AnalysisJobService } from "@/services/analysis/AnalysisJobService";
 import { JobManager } from "@/services/jobs/JobManager";
 import { MongoJobStore } from "@/services/jobs/MongoJobStore";
 import { AnalysisJobRequestSchema } from "@/types/analysisJob";
+import { HttpWorkerDispatcher } from "@/services/worker/HttpWorkerDispatcher";
+
 
 function getAnalysisJobService(): AnalysisJobService {
   const jobManager = new JobManager(new MongoJobStore());
 
-  // Temporary placeholder.
-  // We'll replace this with the real worker dispatcher next.
-  throw new Error("Worker dispatcher not configured");
+  const workerUrl = process.env.WORKER_URL;
+  const workerSecret = process.env.WORKER_SHARED_SECRET;
+
+  if (!workerSecret || !workerUrl){
+    throw new Error("Worker not configured properly");
+  }
+
+  const dispatcher = new HttpWorkerDispatcher(workerUrl, workerSecret);
+
+  return new AnalysisJobService(jobManager, dispatcher);
 }
 
 export async function POST(request: Request) {
@@ -41,7 +50,8 @@ export async function POST(request: Request) {
       },
       { status: 202 }
     );
-  } catch {
+  } catch(error) {
+    console.log("Error creating analysis job", error);
     return NextResponse.json(
       {
         status: "error",

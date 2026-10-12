@@ -1,4 +1,5 @@
 import {
+  afterEach,
   beforeEach,
   describe,
   expect,
@@ -8,6 +9,7 @@ import {
 
 const mocks = vi.hoisted(() => {
   const create = vi.fn();
+  const createAnalysisJob = vi.fn();
 
   class MockJobManager {
     create = create;
@@ -15,6 +17,7 @@ const mocks = vi.hoisted(() => {
 
   return {
     create,
+    createAnalysisJob,
     MockJobManager,
   };
 });
@@ -31,18 +34,35 @@ vi.mock("@/services/jobs/jobId", () => ({
   generateJobId: vi.fn(() => "job_test_123"),
 }));
 
+vi.mock("@/services/analysis/AnalysisJobService", () => ({
+  AnalysisJobService: class {
+    createAnalysisJob = mocks.createAnalysisJob;
+  },
+}));
+
+vi.mock("@/services/worker/HttpWorkerDispatcher", () => ({
+  HttpWorkerDispatcher: vi.fn(),
+}));
+
 import { POST } from "../route";
 
 describe("POST /api/analysis", () => {
     beforeEach(() => {
-        vi.clearAllMocks();
-    });
+  vi.clearAllMocks();
+
+  vi.stubEnv("WORKER_URL", "http://localhost:4000");
+  vi.stubEnv("WORKER_SHARED_SECRET", "a4d3b6d6c0f5e1a08b82a867a471eeef394955b284b47733ea4758fa7fb5e3d3");
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
   it("creates a queued analysis job", async () => {
-    mocks.create.mockResolvedValueOnce({
-      jobId: "job_test_123",
-      status: "queued",
-      createdAt: "2026-10-08T05:00:00.000Z",
-    });
+    mocks.createAnalysisJob.mockResolvedValueOnce({
+  jobId: "job_test_123",
+  status: "queued",
+  createdAt: "2026-10-08T05:00:00.000Z",
+});
 
     const request = new Request("http://localhost:3000/api/analysis", {
       method: "POST",
@@ -69,7 +89,7 @@ describe("POST /api/analysis", () => {
       status: "queued",
     });
 
-    expect(mocks.create).toHaveBeenCalledWith("job_test_123");
+    expect(mocks.createAnalysisJob).toHaveBeenCalledOnce();
   });
 
   it("rejects an invalid analysis request", async () => {
@@ -96,6 +116,6 @@ describe("POST /api/analysis", () => {
     expect(body.status).toBe("error");
     expect(body.message).toBe("Invalid analysis request");
 
-    expect(mocks.create).not.toHaveBeenCalled();
+    expect(mocks.createAnalysisJob).not.toHaveBeenCalled();
   });
 });
