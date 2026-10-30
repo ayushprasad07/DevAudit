@@ -30,9 +30,9 @@ export class RepositoryManager{
     ) {}
 
     async withRepository<T>(
-        options : RepositoryPreparationOptions,
-        inspect : (repositoryPath : string) => Promise<T>
-    ) : Promise<T>{
+        options: RepositoryPreparationOptions,
+        inspect: (repositoryPath: string) => Promise<T>,
+    ): Promise<T>{
         const { url, commit, timeoutMs } = options;
 
         if(!Number.isInteger(timeoutMs) || timeoutMs < 1_000 || timeoutMs > 300_000){

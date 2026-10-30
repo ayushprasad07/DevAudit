@@ -61,3 +61,95 @@ const PYTHON_MANIFESTS: Record<string, ManifestKind> = {
     "setup.py": "setup-py",
     "setup.cfg": "setup-cfg",
 };
+
+function detectManifest(
+    filename : string,
+    ecosystem : Ecosystem
+) : ManifestKind | undefined {
+    const normalized = filename.toLowerCase();
+
+    if (ecosystem === "javascript"){
+        return JAVASCRIPT_MANIFESTS[normalized];
+    }
+
+    if (ecosystem === "python"){
+        if(
+            normalized === "requirements.txt" ||
+            /^requirements[-_.][^/]+\.txt$/.test(normalized)
+        ) {
+            return "requirements";
+        }
+
+        return PYTHON_MANIFESTS[normalized];
+    }
+
+    return undefined;
+}
+
+export class ManifestInspector {
+    async inspect(
+        reposirotryPath : string,
+        ecosystem : Ecosystem
+    ) : Promise<ManifestInspectionResult> {
+        const manifests : DetectedManifest[] = [];
+
+        let entriesVisited = 0;
+
+        const walk = async (
+            directory : string,
+            depth : number
+        ) : Promise<void> => {
+            if (depth > MAX_DEPTH){
+                return;
+            }
+
+            const entries = await readdir(directory, { withFileTypes: true });
+
+            for (const entry of entries){
+                entriesVisited += 1;
+
+                if(entriesVisited > MAX_ENTRIES){
+                    throw new Error(
+                        `Repository exceeds the inspection limit of ${MAX_ENTRIES} entries`,
+                    );
+                }
+
+                if(entry.isSymbolicLink()){
+                    continue;
+                }
+
+                const fullPath = join(directory, entry.name);
+
+                if(entry.isDirectory()){
+                    if (!IGNORED_DIRECTORIES.has(entry.name)) {
+                        await walk(fullPath, depth + 1);
+                    }
+
+                    continue;
+                }
+
+                if (!entry.isFile()){
+                    continue;
+                }
+
+                const kind = detectManifest(entry.name, ecosystem);
+
+                if (kind){
+                    manifests.push({
+                        path: relative(reposirotryPath, fullPath).split(sep).join("/"),
+                        kind,
+                    });
+                }
+            }
+        };
+
+        await walk(reposirotryPath, 0);
+
+        manifests.sort((a, b) => a.path.localeCompare(b.path));
+
+        return {
+            ecosystem,
+            manifests: manifests,
+        };
+    }
+}
