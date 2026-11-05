@@ -123,13 +123,28 @@ describe("Worker job status route", () => {
   });
 
   it("completes a job", async () => {
+    const mockResult = {
+    ecosystem: "javascript" as const,
+    packageManager: "npm" as const,
+    dependencies: [
+      {
+        name: "express",
+        version: "^4.18.0",
+        ecosystem: "javascript" as const,
+        direct: true,
+      },
+    ],
+  };
+
     const response = await POST(
-      makeRequest({ status: "completed" }),
+      makeRequest({ status: "completed" , result: mockResult }),
       makeContext(),
     );
 
+    console.log(await response.json());
+
     expect(response.status).toBe(200);
-    expect(mocks.complete).toHaveBeenCalledWith(JOB_ID);
+    expect(mocks.complete).toHaveBeenCalledWith(JOB_ID,mockResult);
   });
 
   it("fails a job with error details", async () => {

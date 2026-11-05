@@ -1,5 +1,6 @@
 import type { WorkerAnalysisRequest } from "@/types/worker";
 import type { WorkerStatusClient } from "./WorkerStatusClient";
+import type { AnalysisResult } from "@/types/jobs";
 
 import {
     RepositoryManager,
@@ -70,7 +71,15 @@ export async function processJob(
             JSON.stringify(result.dependencies),
         );
 
-        await statusClient.updateStatus(job.jobId, { status: "completed" });
+        const analysisResult : AnalysisResult = {
+            ecosystem: result.ecosystem,
+            ...(result.packageManager
+                ? { packageManager: result.packageManager }
+                : {}),
+            dependencies: result.dependencies,
+        }
+
+        await statusClient.updateStatus(job.jobId, { status: "completed", result : analysisResult });
 
         console.log("Worker completed job : ", job.jobId);
     }catch(error){

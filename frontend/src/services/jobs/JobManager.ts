@@ -1,4 +1,4 @@
-import type { Job } from "@/types/jobs";
+import type { Job, AnalysisResult } from "@/types/jobs";
 
 import type { JobStore } from "./JobStore";
 
@@ -38,7 +38,10 @@ export class JobManager {
     return job;
   }
 
-  async complete(jobId: string): Promise<Job> {
+  async complete(
+    jobId: string,
+    result: AnalysisResult
+  ): Promise<Job> {
     const job = await this.getOrThrow(jobId);
 
     if (job.status !== "running") {
@@ -47,6 +50,7 @@ export class JobManager {
       );
     }
 
+    job.result = result;
     job.status = "completed";
     job.completedAt = new Date().toISOString();
 
@@ -81,10 +85,10 @@ export class JobManager {
   }
 
   async failBeforeStart(
-    jobId : string,
+    jobId: string,
     code: string,
     message: string
-  ) : Promise<Job>{
+  ): Promise<Job> {
     const job = await this.getOrThrow(jobId);
 
     if (job.status !== "queued") {

@@ -13,6 +13,7 @@ export class InMemoryJobStore implements JobStore {
         return this.jobs.get(jobId);
     }
 
+
     async update(job: Job): Promise<void> {
         this.jobs.set(job.jobId, job);
     }

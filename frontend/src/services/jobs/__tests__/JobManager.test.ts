@@ -1,11 +1,27 @@
+
 import { describe, expect, it } from "vitest";
 
 import { JobManager } from "../JobManager";
 import { InMemoryJobStore } from "../InMemoryJobStore";
 
+import type { AnalysisResult } from "@/types/jobs";
+
 describe("JobManager", () => {
   const createManager = () =>
     new JobManager(new InMemoryJobStore());
+
+  const mockResult: AnalysisResult = {
+    ecosystem: "javascript",
+    packageManager: "npm",
+    dependencies: [
+      {
+        name: "express",
+        version: "^4.18.0",
+        ecosystem: "javascript",
+        direct: true,
+      },
+    ],
+  };
 
   it("creates a queued job", async () => {
     const manager = createManager();
@@ -33,7 +49,9 @@ describe("JobManager", () => {
   it("returns undefined for an unknown job", async () => {
     const manager = createManager();
 
-    await expect(manager.get("does_not_exist")).resolves.toBeUndefined();
+    await expect(
+      manager.get("does_not_exist")
+    ).resolves.toBeUndefined();
   });
 
   it("starts a queued job", async () => {
@@ -47,16 +65,21 @@ describe("JobManager", () => {
     expect(job.startedAt).toBeDefined();
   });
 
-  it("completes a running job", async () => {
+  it("completes a running job and stores its result", async () => {
     const manager = createManager();
 
     await manager.create("job_123");
     await manager.start("job_123");
 
-    const job = await manager.complete("job_123");
+    const job = await manager.complete("job_123", mockResult);
 
     expect(job.status).toBe("completed");
+    expect(job.result).toEqual(mockResult);
     expect(job.completedAt).toBeDefined();
+
+    // Verify that the result was persisted in the store.
+    const storedJob = await manager.get("job_123");
+    expect(storedJob?.result).toEqual(mockResult);
   });
 
   it("fails a running job", async () => {
@@ -84,7 +107,9 @@ describe("JobManager", () => {
 
     await manager.create("job_123");
 
-    await expect(manager.complete("job_123")).rejects.toThrow(
+    await expect(
+      manager.complete("job_123", mockResult)
+    ).rejects.toThrow(
       "Cannot complete job job_123 from status queued"
     );
   });
@@ -94,9 +119,11 @@ describe("JobManager", () => {
 
     await manager.create("job_123");
     await manager.start("job_123");
-    await manager.complete("job_123");
+    await manager.complete("job_123", mockResult);
 
-    await expect(manager.start("job_123")).rejects.toThrow(
+    await expect(
+      manager.start("job_123")
+    ).rejects.toThrow(
       "Cannot start job job_123 from status completed"
     );
   });
@@ -106,7 +133,7 @@ describe("JobManager", () => {
 
     await manager.create("job_123");
     await manager.start("job_123");
-    await manager.complete("job_123");
+    await manager.complete("job_123", mockResult);
 
     await expect(
       manager.fail(
@@ -122,30 +149,32 @@ describe("JobManager", () => {
   it("throws when the job does not exist", async () => {
     const manager = createManager();
 
-    await expect(manager.start("unknown_job")).rejects.toThrow(
+    await expect(
+      manager.start("unknown_job")
+    ).rejects.toThrow(
       "Job not found: unknown_job"
     );
   });
 
   it("fails a queued job before worker dispatch starts", async () => {
-  const store = new InMemoryJobStore();
-  const manager = new JobManager(store);
+    const store = new InMemoryJobStore();
+    const manager = new JobManager(store);
 
-  const job = await manager.create("job_dispatch_failure");
+    const job = await manager.create("job_dispatch_failure");
 
-  const failedJob = await manager.failBeforeStart(
-    job.jobId,
-    "DISPATCH_FAILED",
-    "Worker unavailable"
-  );
+    const failedJob = await manager.failBeforeStart(
+      job.jobId,
+      "DISPATCH_FAILED",
+      "Worker unavailable"
+    );
 
-  expect(failedJob.status).toBe("failed");
-  expect(failedJob.error).toEqual({
-    code: "DISPATCH_FAILED",
-    message: "Worker unavailable",
+    expect(failedJob.status).toBe("failed");
+    expect(failedJob.error).toEqual({
+      code: "DISPATCH_FAILED",
+      message: "Worker unavailable",
+    });
+    expect(failedJob.completedAt).toBeDefined();
+
+    expect(await manager.get(job.jobId)).toEqual(failedJob);
   });
-  expect(failedJob.completedAt).toBeDefined();
-
-  expect(await manager.get(job.jobId)).toEqual(failedJob);
-});
 });

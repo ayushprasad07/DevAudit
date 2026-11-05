@@ -1,6 +1,8 @@
+import type {AnalysisResult} from "@/types/jobs";
+
 type WorkerStatusUpdate =
   | { status: "running" }
-  | { status: "completed" }
+  | { status: "completed", result : AnalysisResult }
   | { status: "failed"; error: { code: string; message: string } };
 
 export class WorkerStatusClient {
