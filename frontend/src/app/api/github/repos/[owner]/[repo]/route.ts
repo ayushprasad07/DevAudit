@@ -1,7 +1,6 @@
 import { NextResponse, NextRequest } from "next/server";
 import { getGithubAccessToken } from "@/github/githubToken";
 import { GithubService } from "@/github/GithubService";
-import { NextApiRequest } from "next";
 
 interface RouteContext{
     params : Promise<{
@@ -11,7 +10,7 @@ interface RouteContext{
 }
 
 export async function GET(
-    req : NextApiRequest,
+    req : NextRequest,
     context : RouteContext
 ){
     try{

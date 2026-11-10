@@ -1,10 +1,20 @@
-
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { WorkerStatusClient } from "../WorkerStatusClient";
 
 describe("WorkerStatusClient", () => {
   const fetchMock = vi.fn();
+  const mockResult = {
+    ecosystem: "javascript" as const,
+    dependencies: [
+      {
+        name: "express",
+        version: "^4.21.2",
+        ecosystem: "javascript" as const,
+        direct: true,
+      },
+    ],
+  };
 
   beforeEach(() => {
     vi.stubGlobal("fetch", fetchMock);
@@ -65,7 +75,10 @@ describe("WorkerStatusClient", () => {
     );
 
     await expect(
-      client.updateStatus("job_123", { status: "completed" }),
+      client.updateStatus("job_123", {
+        status: "completed",
+        result: mockResult,
+      }),
     ).rejects.toThrow("HTTP status 409");
   });
 

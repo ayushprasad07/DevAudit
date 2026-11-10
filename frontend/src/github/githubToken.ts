@@ -1,8 +1,8 @@
 import { getToken } from "next-auth/jwt";
-import type { NextApiRequest } from "next";
+import type { NextRequest } from "next/server";
 
 export async function getGithubAccessToken(
-    req : NextApiRequest
+    req : NextRequest
 ) : Promise<string> {
 
     const token  = await getToken({

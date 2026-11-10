@@ -28,3 +28,14 @@ export interface Dependency {
   license?: string;
   repositoryUrl?: string;
 }
+
+export interface ResolvedDependency {
+    id : string;
+    name: string;
+    version: string;
+    ecosystem: Ecosystem;
+    direct: boolean;
+    dependencies: string[];
+    integrity?: string;
+    resolvedUrl?: string;
+}

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getGithubAccessToken } from "@/github/githubToken";
-import { NextApiRequest } from "next";
 
-export async function GET(req : NextApiRequest){
+export async function GET(req : NextRequest){
     try {
         const accessToken = await getGithubAccessToken(req);
 
