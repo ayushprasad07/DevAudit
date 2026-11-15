@@ -6,6 +6,12 @@ import { RepositoryPreparationError } from "@/repository/RepositoryManager";
 import type { WorkerStatusClient } from "../WorkerStatusClient";
 import type { ParsedDependencyManifestResult } from "@/repository/DependencyManifestParser";
 
+import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+
+import { NpmLockfileParser } from "@/repository/resolvers/NpmLockfileParser";
+
 type MockStatusClient = {
   updateStatus: ReturnType<typeof vi.fn>;
 };
@@ -75,9 +81,12 @@ describe("processJob", () => {
       job,
       statusClient as unknown as Pick<WorkerStatusClient, "updateStatus">,
       {
-        repositoryManager: repositoryManager as never,
-        dependencyParser: dependencyParser as never,
-      },
+  repositoryManager: repositoryManager as never,
+  dependencyParser: dependencyParser as never,
+  lockfileParser: {
+    parse: vi.fn().mockReturnValue([]),
+  },
+}
     );
 
     expect(statusClient.updateStatus).toHaveBeenNthCalledWith(1, job.jobId, {
@@ -126,9 +135,12 @@ describe("processJob", () => {
       job,
       statusClient as unknown as Pick<WorkerStatusClient, "updateStatus">,
       {
-        repositoryManager: repositoryManager as never,
-        dependencyParser: dependencyParser as never,
-      },
+  repositoryManager: repositoryManager as never,
+  dependencyParser: dependencyParser as never,
+  lockfileParser: {
+    parse: vi.fn().mockReturnValue([]),
+  },
+}
     );
 
     expect(statusClient.updateStatus).toHaveBeenCalledTimes(1);
@@ -147,9 +159,12 @@ describe("processJob", () => {
       job,
       statusClient as unknown as Pick<WorkerStatusClient, "updateStatus">,
       {
-        repositoryManager: repositoryManager as never,
-        dependencyParser: dependencyParser as never,
-      },
+  repositoryManager: repositoryManager as never,
+  dependencyParser: dependencyParser as never,
+  lockfileParser: {
+    parse: vi.fn().mockReturnValue([]),
+  },
+}
     );
 
     expect(statusClient.updateStatus).toHaveBeenNthCalledWith(2, job.jobId, {
@@ -170,9 +185,12 @@ describe("processJob", () => {
       job,
       statusClient as unknown as Pick<WorkerStatusClient, "updateStatus">,
       {
-        repositoryManager: repositoryManager as never,
-        dependencyParser: dependencyParser as never,
-      },
+  repositoryManager: repositoryManager as never,
+  dependencyParser: dependencyParser as never,
+  lockfileParser: {
+    parse: vi.fn().mockReturnValue([]),
+  },
+}
     );
 
     expect(statusClient.updateStatus).toHaveBeenNthCalledWith(2, job.jobId, {
@@ -194,9 +212,12 @@ describe("processJob", () => {
       job,
       statusClient as unknown as Pick<WorkerStatusClient, "updateStatus">,
       {
-        repositoryManager: repositoryManager as never,
-        dependencyParser: dependencyParser as never,
-      },
+  repositoryManager: repositoryManager as never,
+  dependencyParser: dependencyParser as never,
+  lockfileParser: {
+    parse: vi.fn().mockReturnValue([]),
+  },
+}
     );
 
     expect(statusClient.updateStatus).toHaveBeenNthCalledWith(3, job.jobId, {
@@ -207,4 +228,139 @@ describe("processJob", () => {
       },
     });
   });
+
+
+it("includes resolved dependencies when package-lock.json exists", async () => {
+  const repositoryPath = await mkdtemp(
+    path.join(tmpdir(), "devaudit-lockfile-"),
+  );
+
+  try {
+    const lockfile = {
+      lockfileVersion: 3,
+      packages: {
+        "": {
+          dependencies: {
+            express: "^4.18.0",
+          },
+        },
+        "node_modules/express": {
+          version: "4.21.2",
+          dependencies: {
+            alpha: "1.0.0",
+            beta: "1.0.0",
+          },
+        },
+        "node_modules/alpha": {
+          version: "1.0.0",
+          dependencies: {
+            shared: "^1.0.0",
+          },
+        },
+        "node_modules/beta": {
+          version: "1.0.0",
+          dependencies: {
+            shared: "^2.0.0",
+          },
+        },
+        "node_modules/shared": {
+          version: "1.5.0",
+        },
+        "node_modules/beta/node_modules/shared": {
+          version: "2.5.0",
+        },
+      },
+    };
+
+    await writeFile(
+      path.join(repositoryPath, "package-lock.json"),
+      JSON.stringify(lockfile),
+      "utf-8",
+    );
+
+    repositoryManager.withRepository.mockImplementation(
+      async (_options: unknown, inspect: (repositoryPath: string) => Promise<unknown>) =>
+        inspect(repositoryPath),
+    );
+
+    const lockfileParser = new NpmLockfileParser();
+
+    await processJob(
+      job,
+      statusClient as unknown as Pick<WorkerStatusClient, "updateStatus">,
+      {
+        repositoryManager: repositoryManager as never,
+        dependencyParser: dependencyParser as never,
+        lockfileParser,
+      },
+    );
+
+    const completedUpdate = statusClient.updateStatus.mock.calls.find(
+      (call) => call[1].status === "completed",
+    );
+
+    expect(completedUpdate).toBeDefined();
+
+    const result = completedUpdate![1].result;
+
+    expect(result.resolvedDependencies).toHaveLength(5);
+
+    const sharedPackages = result.resolvedDependencies.filter(
+      (pkg: { name: string }) => pkg.name === "shared",
+    );
+
+    expect(sharedPackages).toHaveLength(2);
+
+    expect(sharedPackages.map(
+      (pkg: { version: string }) => pkg.version,
+    ).sort()).toEqual(["1.5.0", "2.5.0"]);
+
+    const beta = result.resolvedDependencies.find(
+      (pkg: { name: string }) => pkg.name === "beta",
+    );
+
+    expect(beta?.dependencies).toEqual([
+      "node_modules/beta/node_modules/shared",
+    ]);
+  } finally {
+    await rm(repositoryPath, { recursive: true, force: true });
+  }
+});
+
+it("completes successfully when package-lock.json is missing", async () => {
+  const repositoryPath = await mkdtemp(
+    path.join(tmpdir(), "devaudit-no-lockfile-"),
+  );
+
+  try {
+    repositoryManager.withRepository.mockImplementation(
+      async (_options: unknown, inspect: (repositoryPath: string) => Promise<unknown>) =>
+        inspect(repositoryPath),
+    );
+
+    await processJob(
+      job,
+      statusClient as unknown as Pick<WorkerStatusClient, "updateStatus">,
+      {
+        repositoryManager: repositoryManager as never,
+        dependencyParser: dependencyParser as never,
+        lockfileParser: new NpmLockfileParser(),
+      },
+    );
+
+    const completedUpdate = statusClient.updateStatus.mock.calls.find(
+      (call) => call[1].status === "completed",
+    );
+
+    expect(completedUpdate).toBeDefined();
+
+    expect(completedUpdate![1].result.dependencies).toHaveLength(1);
+
+    expect(
+      completedUpdate![1].result.resolvedDependencies,
+    ).toBeUndefined();
+  } finally {
+    await rm(repositoryPath, { recursive: true, force: true });
+  }
+});
 });

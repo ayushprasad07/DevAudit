@@ -29,13 +29,17 @@ export interface Dependency {
   repositoryUrl?: string;
 }
 
-export interface ResolvedDependency {
-    id : string;
-    name: string;
-    version: string;
-    ecosystem: Ecosystem;
-    direct: boolean;
-    dependencies: string[];
-    integrity?: string;
-    resolvedUrl?: string;
-}
+export const ResolvedDependencySchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  version: z.string().min(1),
+  ecosystem: EcosystemSchema,
+  direct: z.boolean(),
+  dependencies: z.array(z.string()),
+  integrity: z.string().optional(),
+  resolvedUrl: z.string().optional(),
+});
+
+export type ResolvedDependency = z.infer<
+  typeof ResolvedDependencySchema
+>;

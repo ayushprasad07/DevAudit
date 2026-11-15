@@ -124,28 +124,74 @@ describe("Worker job status route", () => {
 
   it("completes a job", async () => {
     const mockResult = {
-    ecosystem: "javascript" as const,
-    packageManager: "npm" as const,
-    dependencies: [
-      {
-        name: "express",
-        version: "^4.18.0",
-        ecosystem: "javascript" as const,
-        direct: true,
-      },
-    ],
-  };
+  ecosystem: "javascript" as const,
+  packageManager: "npm" as const,
+  dependencies: [
+    {
+      name: "express",
+      version: "^4.18.0",
+      ecosystem: "javascript" as const,
+      direct: true,
+    },
+  ],
+  resolvedDependencies: [
+    {
+      id: "node_modules/express",
+      name: "express",
+      version: "4.21.2",
+      ecosystem: "javascript" as const,
+      direct: true,
+      dependencies: ["node_modules/accepts"],
+    },
+    {
+      id: "node_modules/accepts",
+      name: "accepts",
+      version: "2.0.0",
+      ecosystem: "javascript" as const,
+      direct: false,
+      dependencies: [],
+    },
+  ],
+};
 
     const response = await POST(
       makeRequest({ status: "completed" , result: mockResult }),
       makeContext(),
     );
 
-    console.log(await response.json());
+    // console.log(await response.json());
 
     expect(response.status).toBe(200);
     expect(mocks.complete).toHaveBeenCalledWith(JOB_ID,mockResult);
   });
+
+  it("rejects completed results with invalid resolved dependencies", async () => {
+  const invalidResult = {
+    ecosystem: "javascript",
+    dependencies: [],
+    resolvedDependencies: [
+      {
+        // id is intentionally missing
+        name: "express",
+        version: "4.21.2",
+        ecosystem: "javascript",
+        direct: true,
+        dependencies: [],
+      },
+    ],
+  };
+
+  const response = await POST(
+    makeRequest({
+      status: "completed",
+      result: invalidResult,
+    }),
+    makeContext(),
+  );
+
+  expect(response.status).toBe(400);
+  expect(mocks.complete).not.toHaveBeenCalled();
+});
 
   it("fails a job with error details", async () => {
     const response = await POST(

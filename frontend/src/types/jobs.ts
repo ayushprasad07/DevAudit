@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
     EcosystemSchema,
     PackageManagerSchema,
+    ResolvedDependencySchema,
 } from "./dependency";
 
 export const JobStatusSchema = z.enum([
@@ -29,6 +30,7 @@ export const AnalysisResultSchema = z.object({
     ecosystem: EcosystemSchema,
     packageManager: PackageManagerSchema.optional(),
     dependencies: z.array(AnalysisDependencySchema),
+    resolvedDependencies: z.array(ResolvedDependencySchema).optional(),
 });
 
 export type AnalysisResult = z.infer<typeof AnalysisResultSchema>;
